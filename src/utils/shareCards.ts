@@ -1,4 +1,5 @@
 import { Share } from 'react-native';
+import * as Sharing from 'expo-sharing';
 import { MatchupResult } from '../logic/matchupScore';
 import { TripDraft, TripIdea } from '../types';
 
@@ -13,6 +14,23 @@ export function shareTripCard(trip: TripDraft, photoUri?: string, prompt = 'Woul
     url: photoUri ?? trip.heroImage,
     message: `${prompt}\n\nI'm shaping this GoWandr trip: ${trip.title}\n\n${trip.subtitle}\n\nTop highlights:\n${topIdeaLines(trip.ideas, 'Save a few highlights first.')}`,
   }).catch(() => undefined);
+}
+
+export async function shareImageFile(uri: string, title = 'Share GoWandr card') {
+  try {
+    const isAvailable = await Sharing.isAvailableAsync();
+    if (isAvailable) {
+      await Sharing.shareAsync(uri, {
+        dialogTitle: title,
+        mimeType: 'image/png',
+        UTI: 'public.png',
+      });
+      return;
+    }
+    await Share.share({ url: uri });
+  } catch {
+    // Sharing is best-effort because target apps differ in how they accept images.
+  }
 }
 
 export function shareTripPlan(trip: TripDraft, pace: TripDraft['pace'], topIdeas: TripIdea[]) {

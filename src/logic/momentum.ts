@@ -39,20 +39,20 @@ export function getNextBestStep(trip: TripDraft): NextBestStep {
 
   if (!trip.ideas.length) {
     return {
-      title: 'Add your first inspiration',
-      reason: 'One link, note, or restaurant is enough to give this trip a starting point.',
+      title: 'Add the links that made this trip feel possible.',
+      reason: 'Paste a TikTok, Instagram, YouTube, or blog link into this draft.',
       effort: '2 minutes',
-      cta: 'Add idea',
+      cta: 'Add links',
       intent: 'addIdea',
     };
   }
 
   if (trip.ideas.length <= 2) {
     return {
-      title: 'Add a few more ideas',
+      title: 'Add a few more links or ideas',
       reason: 'A couple more saves will make this easier to compare with your other options.',
       effort: '5 minutes',
-      cta: 'Keep shaping it',
+      cta: 'Add more',
       intent: 'addMore',
     };
   }
@@ -148,8 +148,8 @@ export function getMomentumCard(trips: TripDraft[]) {
     return {
       trip: undefined,
       eyebrow: 'Momentum',
-      title: 'Start with one place, one link, or one idea.',
-      body: 'GoWandr turns that first spark into a trip worth deciding on.',
+      title: 'Start a trip draft for the links you keep saving.',
+      body: 'Paste favorite TikTok, Instagram, YouTube, or blog links as you find them.',
       cta: 'Start a Trip Draft',
       intent: 'newTrip' as const,
     };
@@ -161,8 +161,8 @@ export function getMomentumCard(trips: TripDraft[]) {
     trip: activeTrip,
     eyebrow: status,
     title: getMomentumCardTitle(activeTrip, status, next),
-    body: next.title,
-    cta: 'Keep going',
+    body: status === 'Just started' ? next.reason : next.title,
+    cta: next.cta,
     intent: next.intent,
   };
 }
@@ -180,7 +180,7 @@ function chooseActiveTrip(trips: TripDraft[]) {
 }
 
 function getMomentumCardTitle(trip: TripDraft, status: MomentumStatus, next: NextBestStep) {
-  if (status === 'Preparing') return `You committed to ${trip.title}. Now let’s make it real.`;
+  if (status === 'Preparing') return `You committed to ${trip.title}. Now let's make it real.`;
   if (status === 'Ready to book') return `${trip.title} has the essentials in place.`;
   if (status === 'Strong option') return `${trip.title} is your strongest option. Ready to commit?`;
   if (status === 'Ready to compare') return `${trip.title} has ${trip.ideas.length} saved ideas. Ready to compare it?`;

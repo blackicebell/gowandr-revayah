@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Animated, ImageBackground, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { font, useThemeColors } from '../theme/colors';
+import { androidTextReset, font, useThemeColors } from '../theme/colors';
 import { TripDraft } from '../types';
 import { getMomentumStatus } from '../logic/momentum';
 import { PressableScale } from './PressableScale';
@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
   image: { height: 174, justifyContent: 'space-between' },
   imageRadius: { borderRadius: 24 },
   scorePill: { alignSelf: 'flex-end', margin: 13, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 999, backgroundColor: 'rgba(9,20,17,0.58)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' },
-  scoreText: { fontSize: 11.5, fontWeight: '700', letterSpacing: 0 },
+  scoreText: { ...androidTextReset, fontSize: 11.5, fontWeight: '700', letterSpacing: 0 },
   copy: { padding: 16 },
-  themeLine: { color: 'rgba(248,248,246,0.88)', fontSize: 12, lineHeight: 16, fontWeight: '700', marginBottom: 6, textShadowColor: 'rgba(0,0,0,0.32)', textShadowRadius: 3, textShadowOffset: { width: 0, height: 1 } },
-  title: { color: '#F8F8F6', fontSize: 26, lineHeight: 30, fontWeight: '700', letterSpacing: -0.26, textShadowColor: 'rgba(0,0,0,0.38)', textShadowRadius: 5, textShadowOffset: { width: 0, height: 2 } },
+  themeLine: { ...androidTextReset, color: 'rgba(248,248,246,0.88)', fontSize: 12, lineHeight: 16, fontWeight: '700', marginBottom: 6, textShadowColor: 'rgba(0,0,0,0.32)', textShadowRadius: 3, textShadowOffset: { width: 0, height: 1 } },
+  title: { ...androidTextReset, color: '#F8F8F6', fontSize: 26, lineHeight: 30, fontWeight: '700', letterSpacing: -0.26, textShadowColor: 'rgba(0,0,0,0.38)', textShadowRadius: 5, textShadowOffset: { width: 0, height: 2 } },
 });

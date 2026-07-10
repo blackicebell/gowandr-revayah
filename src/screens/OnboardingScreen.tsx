@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Image, ImageBackground, Platform, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Image, ImageBackground, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { onboardingImageUris } from '../data/imageAssets';
 import { font, useThemeColors } from '../theme/colors';
@@ -43,7 +44,7 @@ const slides = [
   },
 ];
 
-export function OnboardingScreen({ onFinish }: { onFinish: () => void }) {
+export function OnboardingScreen({ onFinish }: { onFinish: (nextScreen?: 'home' | 'newTrip') => void }) {
   const theme = useThemeColors();
   const [index, setIndex] = useState(0);
   const slideMotion = useRef(new Animated.Value(1)).current;
@@ -56,12 +57,12 @@ export function OnboardingScreen({ onFinish }: { onFinish: () => void }) {
   }, [index, slideMotion]);
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: theme.canvas }]}>
+    <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={[styles.screen, { backgroundColor: theme.canvas }]}>
       <View style={styles.brandRow}>
         <View style={styles.logoPill}>
           <Image source={require('../../assets/brand/gowandr-logo-full-color.png')} style={styles.logo} resizeMode="contain" />
         </View>
-        <TouchableOpacity onPress={onFinish} style={styles.skipButton}>
+        <TouchableOpacity onPress={() => onFinish('home')} style={styles.skipButton}>
           <Text style={[styles.skipText, { fontFamily: font.semibold }]}>Skip</Text>
         </TouchableOpacity>
       </View>
@@ -83,15 +84,15 @@ export function OnboardingScreen({ onFinish }: { onFinish: () => void }) {
         </Animated.View>
       </ImageBackground>
       <View style={styles.actions}>
-        <Button label={isLast ? 'Create My First Trip' : 'Next'} onPress={() => (isLast ? onFinish() : setIndex((current) => current + 1))} />
-        {!isLast && <Button label="Start now" variant="secondary" onPress={onFinish} />}
+        <Button label={isLast ? 'Create My First Trip' : 'Next'} onPress={() => (isLast ? onFinish('newTrip') : setIndex((current) => current + 1))} />
+        {!isLast && <Button label="Start a Trip Draft" variant="secondary" onPress={() => onFinish('newTrip')} />}
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 22 : 10, paddingBottom: Platform.OS === 'ios' ? 18 : 24 },
+  screen: { flex: 1, paddingHorizontal: 16, paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 18 : 24 },
   brandRow: { minHeight: 54, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   logoPill: { height: 50, minWidth: 170, borderRadius: 25, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.72)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.05)', shadowColor: '#6ED8B5', shadowOpacity: 0.14, shadowRadius: 14, shadowOffset: { width: 0, height: 4 } },
   logo: { width: 136, height: 34 },

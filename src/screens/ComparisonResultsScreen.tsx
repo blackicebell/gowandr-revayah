@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { Alert, ImageBackground, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ImageBackground, Platform, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
-import { colors, font } from '../theme/colors';
+import { androidTextReset, colors, font } from '../theme/colors';
 import { ComparisonResponse, MatchupResultSummary, MatchupSession } from '../types';
 
 export function ComparisonResultsScreen({
@@ -207,16 +207,16 @@ const styles = StyleSheet.create({
   hero: { minHeight: 260, borderRadius: 28, overflow: 'hidden', justifyContent: 'space-between', marginBottom: 16 },
   heroImage: { borderRadius: 28 },
   shade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.30)' },
-  momentumPill: { alignSelf: 'flex-end', margin: 14, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(168,240,212,0.92)' },
-  momentumText: { color: '#173A33', fontFamily: font.semibold, fontWeight: '700', fontSize: 12 },
+  momentumPill: { alignSelf: 'flex-end', margin: 14, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: Platform.OS === 'android' ? '#A8F0D4' : 'rgba(168,240,212,0.92)' },
+  momentumText: { ...androidTextReset, color: '#173A33', fontFamily: font.semibold, fontWeight: '700', fontSize: 12 },
   heroCopy: { padding: 18 },
   heroTitle: { color: colors.white, fontFamily: font.heading, fontWeight: '700', fontSize: 30, lineHeight: 35 },
   heroMeta: { color: 'rgba(255,255,255,0.88)', fontFamily: font.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
-  stat: { width: '48%', minHeight: 98, borderRadius: 20, padding: 14, backgroundColor: 'rgba(255,255,255,0.82)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)' },
+  stat: { width: '48%', minHeight: 98, borderRadius: 20, padding: 14, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.82)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)' },
   statLabel: { color: colors.tealDark, fontFamily: font.semibold, fontWeight: '700', fontSize: 10, textTransform: 'uppercase' },
   statValue: { color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 17, lineHeight: 22, marginTop: 8 },
-  section: { borderRadius: 24, padding: 17, backgroundColor: 'rgba(255,255,255,0.82)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)', marginBottom: 14 },
+  section: { borderRadius: 24, padding: 17, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.82)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)', marginBottom: 14 },
   sectionTitle: { color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 21, letterSpacing: -0.2, marginBottom: 12 },
   resultRow: { gap: 8, marginBottom: 13 },
   resultCopy: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
@@ -229,15 +229,15 @@ const styles = StyleSheet.create({
   reasonText: { color: colors.muted, fontFamily: font.body, fontSize: 13.5, lineHeight: 19, marginTop: 4 },
   emptyLine: { color: colors.muted, fontFamily: font.body, fontSize: 13.5, lineHeight: 19 },
   concernWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
-  concernPill: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.78)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)' },
-  concernText: { color: colors.charcoal, fontFamily: font.semibold, fontWeight: '600', fontSize: 12.5 },
-  responseCard: { borderRadius: 18, padding: 13, backgroundColor: 'rgba(255,255,255,0.74)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.06)', marginBottom: 10 },
+  concernPill: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.78)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)' },
+  concernText: { ...androidTextReset, color: colors.charcoal, fontFamily: font.semibold, fontWeight: '600', fontSize: 12.5 },
+  responseCard: { borderRadius: 18, padding: 13, backgroundColor: Platform.OS === 'android' ? '#F8FAF9' : 'rgba(255,255,255,0.74)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.06)', marginBottom: 10 },
   responseTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
   responseCopy: { flex: 1 },
   responseName: { color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 16 },
   responseTrip: { color: colors.muted, fontFamily: font.body, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
   responseReason: { color: colors.charcoal, fontFamily: font.body, fontSize: 13.5, lineHeight: 19, marginTop: 9 },
   deleteButton: { minHeight: 32, justifyContent: 'center' },
-  deleteText: { color: '#B84A3F', fontFamily: font.semibold, fontWeight: '600', fontSize: 12.5 },
+  deleteText: { ...androidTextReset, color: '#B84A3F', fontFamily: font.semibold, fontWeight: '600', fontSize: 12.5 },
   actions: { gap: 10, marginTop: 4, marginBottom: 120 },
 });

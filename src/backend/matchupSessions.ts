@@ -2,6 +2,7 @@ import { addDoc, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, server
 import { getFirebaseRuntime, hasFirebaseConfig } from './firebase';
 import { ComparisonResponse, ComparisonTrip, MatchupSession, TripDraft, VoteAnswer } from '../types';
 import { getOwnerDeviceId } from '../storage/identityStorage';
+import { getPublicCoverImageUrlForTrip } from '../utils/publicCoverImages';
 
 const MATCHUP_SESSIONS_COLLECTION = 'comparisons';
 
@@ -11,8 +12,7 @@ export function isSharedVotingConfigured() {
 
 export function buildMatchupShareUrl(sessionId: string) {
   const runtimeOrigin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : undefined;
-  const configuredUrl = process.env.EXPO_PUBLIC_PUBLIC_APP_URL;
-  const baseUrl = runtimeOrigin || configuredUrl || 'https://gowandr2.web.app';
+  const baseUrl = runtimeOrigin || 'https://gowandr2.web.app';
   return `${baseUrl.replace(/\/$/, '')}/c/${encodeURIComponent(sessionId)}`;
 }
 
@@ -144,7 +144,7 @@ function toComparisonTrip(trip: TripDraft): ComparisonTrip {
     id: trip.id,
     title: trip.title,
     subtitle: trip.subtitle,
-    coverImageUrl: trip.heroImage,
+    coverImageUrl: getPublicCoverImageUrlForTrip(trip),
     mood: trip.tags[0] ?? 'Travel',
     pace: trip.pace,
     companionType: trip.companionType,

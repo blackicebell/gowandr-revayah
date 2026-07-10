@@ -2,8 +2,8 @@
   "expo": {
     "name": "GoWandr",
     "slug": "gowandr",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "version": "1.0.1",
+    "orientation": "default",
     "icon": "./assets/brand/gowandr-logo-icon-color.png",
     "userInterfaceStyle": "light",
     "splash": {
@@ -22,18 +22,30 @@
       }
     },
     "android": {
+      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/gowandr-logo-icon-color.png",
         "backgroundColor": "#F8F4EC"
       },
-      "package": "com.gowandr.app"
+      "package": "com.gowandr.mobile",
+      "permissions": [
+        "com.android.vending.BILLING"
+      ]
     },
     "web": {
       "favicon": "./assets/brand/gowandr-logo-icon-color.png"
     },
     "plugins": [
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

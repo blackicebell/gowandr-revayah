@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, Platform, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../components/Button';
-import { colors, font } from '../theme/colors';
+import { androidTextReset, colors, font } from '../theme/colors';
 import { explainResult, scoreMatchup } from '../logic/matchupScore';
 import { MatchupResultSummary, TripDraft, VoteAnswer } from '../types';
 import { shareMatchupResult } from '../utils/shareCards';
@@ -93,24 +93,24 @@ function ResultStat({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  kicker: { color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', textTransform: 'uppercase', fontSize: 12, marginTop: 12 },
-  title: { color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 34, lineHeight: 39, marginTop: 5, letterSpacing: -0.4 },
-  body: { color: colors.muted, fontFamily: font.body, fontWeight: '400', fontSize: 16, lineHeight: 23, marginTop: 9, marginBottom: 18 },
+  kicker: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', textTransform: 'uppercase', fontSize: 12, marginTop: 12 },
+  title: { ...androidTextReset, color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 34, lineHeight: 39, marginTop: 5, letterSpacing: -0.4 },
+  body: { ...androidTextReset, color: colors.muted, fontFamily: font.body, fontWeight: '400', fontSize: 16, lineHeight: 23, marginTop: 9, marginBottom: 18 },
   winner: { minHeight: 330, borderRadius: 28, overflow: 'hidden', justifyContent: 'space-between', marginBottom: 16 },
   winnerImage: { borderRadius: 28 },
   shade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.26)' },
-  scorePill: { alignSelf: 'flex-end', margin: 14, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.94)' },
-  scoreText: { color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600' },
-  winnerTitle: { color: colors.white, fontFamily: font.heading, fontWeight: '700', fontSize: 32, padding: 20 },
+  scorePill: { alignSelf: 'flex-end', margin: 14, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.94)' },
+  scoreText: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600' },
+  winnerTitle: { ...androidTextReset, color: colors.white, fontFamily: font.heading, fontWeight: '700', fontSize: 32, padding: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
   stat: { width: '48%', minHeight: 96, borderRadius: 20, padding: 14, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
-  statLabel: { color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', fontSize: 10, textTransform: 'uppercase' },
-  statValue: { color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 17, marginTop: 8 },
+  statLabel: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', fontSize: 10, textTransform: 'uppercase' },
+  statValue: { ...androidTextReset, color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 17, marginTop: 8 },
   actions: { gap: 10, marginTop: 18 },
-  detailsCard: { borderRadius: 24, padding: 18, backgroundColor: 'rgba(255,255,255,0.84)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)', marginTop: 16, gap: 12 },
-  detailsKicker: { color: colors.tealDark, fontFamily: font.semibold, fontWeight: '700', fontSize: 11, textTransform: 'uppercase' },
-  detailsTitle: { color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 21, lineHeight: 26, letterSpacing: -0.2 },
-  personBlock: { borderRadius: 18, padding: 13, backgroundColor: 'rgba(168,240,212,0.22)', borderWidth: 1, borderColor: 'rgba(47,175,138,0.12)' },
-  personName: { color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 16, marginBottom: 7 },
-  personVote: { color: colors.muted, fontFamily: font.body, fontSize: 13.5, lineHeight: 19, marginTop: 3 },
+  detailsCard: { borderRadius: 24, padding: 18, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.84)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)', marginTop: 16, gap: 12 },
+  detailsKicker: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '700', fontSize: 11, textTransform: 'uppercase' },
+  detailsTitle: { ...androidTextReset, color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 21, lineHeight: 26, letterSpacing: -0.2 },
+  personBlock: { borderRadius: 18, padding: 13, backgroundColor: Platform.OS === 'android' ? '#E9FBF4' : 'rgba(168,240,212,0.22)', borderWidth: 1, borderColor: 'rgba(47,175,138,0.12)' },
+  personName: { ...androidTextReset, color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 16, marginBottom: 7 },
+  personVote: { ...androidTextReset, color: colors.muted, fontFamily: font.body, fontSize: 13.5, lineHeight: 19, marginTop: 3 },
 });

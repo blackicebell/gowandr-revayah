@@ -1,7 +1,7 @@
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { font } from '../theme/colors';
+import { androidTextReset, font } from '../theme/colors';
 
 type SourceKind = 'instagram' | 'tiktok' | 'youtube' | 'website' | 'note';
 
@@ -49,7 +49,7 @@ function getPriorityLabel(priority: string) {
 const sourceConfigs: Record<SourceKind, { initials: string; label: string; detailLabel: string; markBackground: string; markText: string; gradient: [string, string, string] }> = {
   instagram: {
     initials: 'IG',
-    label: 'Instagram save',
+    label: 'Instagram link',
     detailLabel: 'Instagram post',
     markBackground: '#FFE6F0',
     markText: '#B8336A',
@@ -57,7 +57,7 @@ const sourceConfigs: Record<SourceKind, { initials: string; label: string; detai
   },
   tiktok: {
     initials: 'TT',
-    label: 'TikTok save',
+    label: 'TikTok link',
     detailLabel: 'TikTok post',
     markBackground: '#17231F',
     markText: '#A8F0D4',
@@ -65,7 +65,7 @@ const sourceConfigs: Record<SourceKind, { initials: string; label: string; detai
   },
   youtube: {
     initials: 'YT',
-    label: 'YouTube save',
+    label: 'YouTube link',
     detailLabel: 'YouTube video',
     markBackground: '#FFE1DD',
     markText: '#C33A2E',
@@ -94,10 +94,10 @@ const styles = StyleSheet.create({
   watermark: { position: 'absolute', right: 12, bottom: 8, width: 64, height: 64, opacity: 0.12 },
   motifLineOne: { position: 'absolute', width: 156, height: 1, right: -30, top: 34, backgroundColor: 'rgba(19,125,104,0.16)', transform: [{ rotate: '-22deg' }] },
   motifLineTwo: { position: 'absolute', width: 144, height: 1, left: -42, bottom: 34, backgroundColor: 'rgba(19,125,104,0.12)', transform: [{ rotate: '-22deg' }] },
-  priority: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.78)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)' },
-  priorityText: { color: '#26302C', fontSize: 10, fontWeight: '600', letterSpacing: 0 },
+  priority: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.78)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)' },
+  priorityText: { ...androidTextReset, color: '#26302C', fontSize: 10, fontWeight: '600', letterSpacing: 0 },
   sourceCopy: { gap: 8 },
   sourceMark: { alignSelf: 'flex-start', minWidth: 48, height: 34, borderRadius: 14, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  sourceInitials: { fontSize: 13, fontWeight: '700', letterSpacing: -0.1 },
-  sourceLabel: { color: '#26302C', fontSize: 13, fontWeight: '600', letterSpacing: -0.05 },
+  sourceInitials: { ...androidTextReset, fontSize: 13, fontWeight: '700', letterSpacing: -0.1 },
+  sourceLabel: { ...androidTextReset, color: '#26302C', fontSize: 13, fontWeight: '600', letterSpacing: -0.05 },
 });

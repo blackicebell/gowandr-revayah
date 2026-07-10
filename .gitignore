@@ -1,5 +1,7 @@
 node_modules/
+.agents/
 .expo/
+.expo-export-test-*/
 .firebase/
 dist/
 web-build/
@@ -9,8 +11,11 @@ yarn-error.log*
 .DS_Store
 .env
 .env.local
+credentials.json
 *.jks
 *.p8
 *.p12
+*.pem
 *.key
 *.mobileprovision
+tools/ffmpeg/

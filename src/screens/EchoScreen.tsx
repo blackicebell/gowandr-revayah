@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { EchoCard } from '../components/EchoCard';
 import { PressableScale } from '../components/PressableScale';
 import { getMomentumStatus, getNextBestStep } from '../logic/momentum';
-import { colors, font, useThemeColors } from '../theme/colors';
+import { androidTextReset, colors, font, useThemeColors } from '../theme/colors';
 import { TripDraft } from '../types';
 
 type MoodFilter = 'All' | 'Food' | 'Beach' | 'Reset' | 'Celebration' | 'Culture' | 'Adventure' | 'Romance';
@@ -31,9 +31,9 @@ export function EchoScreen({
     <View>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.charcoal, fontFamily: font.heading }]}>Trip Ideas</Text>
-        <Text style={[styles.body, { color: theme.muted, fontFamily: font.body }]}>Save travel ideas, shape them into options, and choose what is actually worth planning.</Text>
+        <Text style={[styles.body, { color: theme.muted, fontFamily: font.body }]}>Save travel links and ideas, shape them into options, and choose what is actually worth planning.</Text>
         <View style={styles.actions}>
-          <BoardAction label="New Trip Idea" tone="primary" onPress={onCreateTrip} />
+          <BoardAction label="New Trip Idea" tone="primary" onPress={() => onCreateTrip()} />
         </View>
         {continueTrip && <ContinueWorkingCard trip={continueTrip} onOpenTrip={() => onOpenTrip(continueTrip.id)} onCreateMatchup={onCreateMatchup} />}
         <View style={styles.sectionIntro}>
@@ -54,9 +54,9 @@ export function EchoScreen({
 
       {!trips.length ? (
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyTitle, { fontFamily: font.heading }]}>Start with one place, one link, or one idea.</Text>
-          <Text style={[styles.emptyBody, { fontFamily: font.body }]}>GoWandr works best when you catch the idea before it disappears.</Text>
-          <BoardAction label="Create your first trip idea" tone="primary" onPress={onCreateTrip} />
+          <Text style={[styles.emptyTitle, { fontFamily: font.heading }]}>Start a trip draft for the links you keep saving.</Text>
+          <Text style={[styles.emptyBody, { fontFamily: font.body }]}>Paste TikToks, Reels, YouTube videos, restaurants, and notes before the idea disappears.</Text>
+          <BoardAction label="Create your first trip draft" tone="primary" onPress={() => onCreateTrip()} />
         </View>
       ) : !filteredTrips.length ? (
         <View style={styles.emptyState}>
@@ -129,10 +129,10 @@ function getTripPriority(trip: TripDraft) {
 }
 
 function getContinueMessage(trip: TripDraft, status: string) {
-  if (status === 'Ready to compare') return 'You have enough inspiration to put this against another strong option.';
+  if (status === 'Ready to compare') return 'You have enough saved ideas to put this against another strong option.';
   if (status === 'Strong option') return 'This one already has momentum. Open it when you are ready to commit.';
   if (status === 'Taking shape') return 'Add one or two more highlights so it becomes easier to compare.';
-  if (status === 'Just started') return 'Add a link, note, restaurant, or moment to make this feel real.';
+  if (status === 'Just started') return 'Add a TikTok, Reel, YouTube video, restaurant, or note to make this feel real.';
   if (status === 'Preparing' || status === 'Ready to book') return 'This trip is in Plan. Keep the prep moving.';
   return `${trip.companionType} / ${trip.pace}`;
 }
@@ -152,35 +152,35 @@ function matchesMoodFilter(trip: TripDraft, filter: MoodFilter) {
 
 const styles = StyleSheet.create({
   header: { paddingTop: 14, paddingBottom: 20 },
-  title: { color: colors.charcoal, fontWeight: '700', fontSize: 42, lineHeight: 50, letterSpacing: -0.42 },
-  body: { color: colors.muted, fontSize: 16, lineHeight: 24, marginTop: 8, marginBottom: 16, fontWeight: '400' },
+  title: { ...androidTextReset, color: colors.charcoal, fontWeight: '700', fontSize: 42, lineHeight: 50, letterSpacing: -0.42 },
+  body: { ...androidTextReset, color: colors.muted, fontSize: 16, lineHeight: 24, marginTop: 8, marginBottom: 16, fontWeight: '400' },
   actions: { gap: 10 },
   boardButton: { minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   boardPrimary: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 7 }, elevation: 5 },
-  boardSecondary: { backgroundColor: 'rgba(168,240,212,0.20)', borderWidth: 1, borderColor: 'rgba(47,175,138,0.30)', shadowColor: '#2FAF8A', shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+  boardSecondary: { backgroundColor: Platform.OS === 'android' ? '#E9FBF4' : 'rgba(168,240,212,0.20)', borderWidth: 1, borderColor: 'rgba(47,175,138,0.30)', shadowColor: '#2FAF8A', shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
   boardButtonFill: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  boardPrimaryText: { color: '#173A33', fontWeight: '700', fontSize: 15 },
-  boardSecondaryText: { color: '#173A33', fontWeight: '700', fontSize: 15 },
-  continueCard: { marginTop: 18, borderRadius: 26, padding: 18, backgroundColor: 'rgba(255,255,255,0.82)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)', shadowColor: '#173A33', shadowOpacity: 0.09, shadowRadius: 18, shadowOffset: { width: 0, height: 7 }, elevation: 4, gap: 14 },
+  boardPrimaryText: { ...androidTextReset, color: '#173A33', fontWeight: '700', fontSize: 15 },
+  boardSecondaryText: { ...androidTextReset, color: '#173A33', fontWeight: '700', fontSize: 15 },
+  continueCard: { marginTop: 18, borderRadius: 26, padding: 18, backgroundColor: Platform.OS === 'android' ? '#F8FAF9' : 'rgba(255,255,255,0.82)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)', shadowColor: '#173A33', shadowOpacity: 0.09, shadowRadius: 18, shadowOffset: { width: 0, height: 7 }, elevation: 4, gap: 14 },
   continueCopy: { gap: 5 },
-  continueEyebrow: { color: '#137D68', fontWeight: '800', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.55 },
-  continueTitle: { color: '#202623', fontWeight: '700', fontSize: 24, lineHeight: 29, letterSpacing: -0.24 },
-  continueBody: { color: 'rgba(32,38,35,0.66)', fontSize: 14.5, lineHeight: 21, fontWeight: '500' },
+  continueEyebrow: { ...androidTextReset, color: '#137D68', fontWeight: '800', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.55 },
+  continueTitle: { ...androidTextReset, color: '#202623', fontWeight: '700', fontSize: 24, lineHeight: 29, letterSpacing: -0.24 },
+  continueBody: { ...androidTextReset, color: 'rgba(32,38,35,0.66)', fontSize: 14.5, lineHeight: 21, fontWeight: '500' },
   continueMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  continueStatus: { flex: 1, color: '#137D68', fontWeight: '700', fontSize: 12.5 },
-  continueButton: { minHeight: 42, borderRadius: 999, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(168,240,212,0.74)', borderWidth: 1, borderColor: 'rgba(47,175,138,0.18)' },
-  continueButtonText: { color: '#173A33', fontWeight: '700', fontSize: 13 },
+  continueStatus: { ...androidTextReset, flex: 1, color: '#137D68', fontWeight: '700', fontSize: 12.5 },
+  continueButton: { minHeight: 42, borderRadius: 999, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: Platform.OS === 'android' ? '#C7F7E5' : 'rgba(168,240,212,0.74)', borderWidth: 1, borderColor: 'rgba(47,175,138,0.18)' },
+  continueButtonText: { ...androidTextReset, color: '#173A33', fontWeight: '700', fontSize: 13 },
   sectionIntro: { marginTop: 22, marginBottom: 12, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 },
-  sectionLabel: { color: '#202623', fontWeight: '700', fontSize: 23, lineHeight: 28, letterSpacing: -0.23 },
-  sectionHint: { color: 'rgba(32,38,35,0.58)', fontSize: 13.5, lineHeight: 19, marginTop: 2 },
-  sectionCount: { color: 'rgba(32,38,35,0.54)', fontSize: 12.5, fontWeight: '700', paddingBottom: 3 },
+  sectionLabel: { ...androidTextReset, color: '#202623', fontWeight: '700', fontSize: 23, lineHeight: 28, letterSpacing: -0.23 },
+  sectionHint: { ...androidTextReset, color: 'rgba(32,38,35,0.58)', fontSize: 13.5, lineHeight: 19, marginTop: 2 },
+  sectionCount: { ...androidTextReset, color: 'rgba(32,38,35,0.54)', fontSize: 12.5, fontWeight: '700', paddingBottom: 3 },
   filterRow: { flexDirection: 'row', gap: 8, paddingRight: 12 },
-  filterChip: { minHeight: 38, borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, backgroundColor: 'rgba(255,255,255,0.68)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)' },
-  filterChipActive: { backgroundColor: 'rgba(168,240,212,0.66)', borderColor: 'rgba(47,175,138,0.22)' },
-  filterText: { color: 'rgba(32,38,35,0.62)', fontWeight: '700', fontSize: 12.5 },
+  filterChip: { minHeight: 38, borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, backgroundColor: Platform.OS === 'android' ? '#F8FAF9' : 'rgba(255,255,255,0.68)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)' },
+  filterChipActive: { backgroundColor: Platform.OS === 'android' ? '#CFF8E9' : 'rgba(168,240,212,0.66)', borderColor: 'rgba(47,175,138,0.22)' },
+  filterText: { ...androidTextReset, color: 'rgba(32,38,35,0.62)', fontWeight: '700', fontSize: 12.5 },
   filterTextActive: { color: '#173A33' },
   cardList: { paddingTop: 4 },
-  emptyState: { borderRadius: 26, padding: 20, backgroundColor: 'rgba(255,255,255,0.78)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 18, shadowOffset: { width: 0, height: 7 }, elevation: 4, gap: 12 },
-  emptyTitle: { color: colors.charcoal, fontSize: 23, lineHeight: 28, fontWeight: '700', letterSpacing: -0.23 },
-  emptyBody: { color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 4 },
+  emptyState: { borderRadius: 26, padding: 20, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.78)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 18, shadowOffset: { width: 0, height: 7 }, elevation: 4, gap: 12 },
+  emptyTitle: { ...androidTextReset, color: colors.charcoal, fontSize: 23, lineHeight: 28, fontWeight: '700', letterSpacing: -0.23 },
+  emptyBody: { ...androidTextReset, color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 4 },
 });

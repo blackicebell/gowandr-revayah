@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ImageBackground, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ImageBackground, Linking, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Chip } from '../components/Chip';
 import { SourceThumbnail, getSourceLabel } from '../components/SourceThumbnail';
-import { colors, font } from '../theme/colors';
+import { androidTextReset, colors, font } from '../theme/colors';
 import { TripDraft, VoteAnswer, VotePrompt } from '../types';
 
 type PromptConfig = {
@@ -91,7 +91,7 @@ export function VotingScreen({ trips, matchupName, onCancel, onComplete }: { tri
       {phase === 'preview' ? (
         <>
           <Text style={styles.title}>Watch the highlights first.</Text>
-          <Text style={styles.helper}>You are comparing the saved inspiration, not just destination names. Skim each trip, then decide what pulls you.</Text>
+          <Text style={styles.helper}>You are comparing the saved links and ideas, not just destination names. Skim each trip, then decide what pulls you.</Text>
           <View style={styles.playlists}>
             {trips.map((trip) => (
               <TripHighlightPreview key={trip.id} trip={trip} />
@@ -216,45 +216,45 @@ function formatHighlightSource(link?: string) {
 }
 
 const styles = StyleSheet.create({
-  kicker: { color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', textTransform: 'uppercase', fontSize: 12, marginTop: 10 },
-  title: { color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 31, lineHeight: 37, marginTop: 6, letterSpacing: -0.4 },
-  helper: { color: colors.muted, fontFamily: font.body, fontWeight: '400', fontSize: 15, lineHeight: 22, marginTop: 8 },
-  progress: { color: colors.muted, fontFamily: font.semibold, fontWeight: '600', marginTop: 10, marginBottom: 18 },
+  kicker: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', textTransform: 'uppercase', fontSize: 12, marginTop: 10 },
+  title: { ...androidTextReset, color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 31, lineHeight: 37, marginTop: 6, letterSpacing: -0.4 },
+  helper: { ...androidTextReset, color: colors.muted, fontFamily: font.body, fontWeight: '400', fontSize: 15, lineHeight: 22, marginTop: 8 },
+  progress: { ...androidTextReset, color: colors.muted, fontFamily: font.semibold, fontWeight: '600', marginTop: 10, marginBottom: 18 },
   playlists: { gap: 16 },
-  playlistCard: { borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.84)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)', padding: 12, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
+  playlistCard: { borderRadius: 26, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.84)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.07)', padding: 12, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
   playlistHero: { minHeight: 170, justifyContent: 'flex-end', borderRadius: 20, overflow: 'hidden' },
   playlistHeroImage: { borderRadius: 20 },
   playlistShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.28)' },
   playlistHeroCopy: { padding: 15 },
-  playlistCount: { color: '#A8F0D4', fontFamily: font.semibold, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  playlistTitle: { color: colors.white, fontFamily: font.heading, fontWeight: '700', fontSize: 24, lineHeight: 29, marginTop: 4 },
-  playlistMeta: { color: 'rgba(255,255,255,0.86)', fontFamily: font.body, fontSize: 13, lineHeight: 18, marginTop: 4, textTransform: 'capitalize' },
+  playlistCount: { ...androidTextReset, color: '#A8F0D4', fontFamily: font.semibold, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
+  playlistTitle: { ...androidTextReset, color: colors.white, fontFamily: font.heading, fontWeight: '700', fontSize: 24, lineHeight: 29, marginTop: 4 },
+  playlistMeta: { ...androidTextReset, color: 'rgba(255,255,255,0.86)', fontFamily: font.body, fontSize: 13, lineHeight: 18, marginTop: 4, textTransform: 'capitalize' },
   highlightRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
-  highlightCard: { flex: 1, minWidth: '30%', borderRadius: 18, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.86)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.06)' },
+  highlightCard: { flex: 1, minWidth: '30%', borderRadius: 18, overflow: 'hidden', backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.86)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.06)' },
   highlightCardLinked: { borderColor: 'rgba(47,175,138,0.18)' },
-  highlightTitle: { color: colors.charcoal, fontFamily: font.semibold, fontWeight: '700', fontSize: 12, marginHorizontal: 9, marginTop: 8 },
-  highlightSource: { color: colors.tealDark, fontFamily: font.body, fontWeight: '500', fontSize: 11, marginHorizontal: 9, marginTop: 2, marginBottom: 9 },
+  highlightTitle: { ...androidTextReset, color: colors.charcoal, fontFamily: font.semibold, fontWeight: '700', fontSize: 12, marginHorizontal: 9, marginTop: 8 },
+  highlightSource: { ...androidTextReset, color: colors.tealDark, fontFamily: font.body, fontWeight: '500', fontSize: 11, marginHorizontal: 9, marginTop: 2, marginBottom: 9 },
   cards: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   voteCard: { width: '48%', borderRadius: 24, overflow: 'hidden', backgroundColor: colors.charcoal, shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 16, shadowOffset: { width: 0, height: 7 }, elevation: 4 },
   image: { minHeight: 216, justifyContent: 'flex-end' },
   imageRadius: { borderRadius: 24 },
   shade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.24)' },
   cardCopy: { padding: 16 },
-  cardTitle: { color: colors.white, fontFamily: font.heading, fontWeight: '700', fontSize: 23, lineHeight: 27 },
-  cardMeta: { color: colors.white, fontFamily: font.semibold, opacity: 0.92, fontWeight: '600', marginTop: 5, textTransform: 'capitalize', fontSize: 12 },
-  whyCard: { borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.82)', padding: 18, borderWidth: 1, borderColor: 'rgba(32,38,35,0.06)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
-  whyLabel: { color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', textTransform: 'uppercase', fontSize: 11 },
-  whyTitle: { color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 27, marginTop: 4, letterSpacing: -0.25 },
-  whyBody: { color: colors.muted, fontFamily: font.body, fontWeight: '400', fontSize: 15, lineHeight: 21, marginTop: 6, marginBottom: 12 },
-  reasonInput: { minHeight: 104, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(32,38,35,0.08)', backgroundColor: 'rgba(255,255,255,0.68)', color: colors.charcoal, fontFamily: font.body, padding: 14, fontSize: 15, textAlignVertical: 'top' },
+  cardTitle: { ...androidTextReset, color: colors.white, fontFamily: font.heading, fontWeight: '700', fontSize: 23, lineHeight: 27 },
+  cardMeta: { ...androidTextReset, color: colors.white, fontFamily: font.semibold, opacity: 0.92, fontWeight: '600', marginTop: 5, textTransform: 'capitalize', fontSize: 12 },
+  whyCard: { borderRadius: 24, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.82)', padding: 18, borderWidth: 1, borderColor: 'rgba(32,38,35,0.06)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+  whyLabel: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', textTransform: 'uppercase', fontSize: 11 },
+  whyTitle: { ...androidTextReset, color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 27, marginTop: 4, letterSpacing: -0.25 },
+  whyBody: { ...androidTextReset, color: colors.muted, fontFamily: font.body, fontWeight: '400', fontSize: 15, lineHeight: 21, marginTop: 6, marginBottom: 12 },
+  reasonInput: { minHeight: 104, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(32,38,35,0.08)', backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.68)', color: colors.charcoal, fontFamily: font.body, padding: 14, fontSize: 15, textAlignVertical: 'top' },
   choiceSection: { marginTop: 24 },
-  label: { color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 18, marginBottom: 5, letterSpacing: -0.12 },
-  sectionHint: { color: colors.muted, fontFamily: font.body, fontWeight: '400', fontSize: 13, lineHeight: 18, marginBottom: 12 },
+  label: { ...androidTextReset, color: colors.charcoal, fontFamily: font.heading, fontWeight: '700', fontSize: 18, marginBottom: 5, letterSpacing: -0.12 },
+  sectionHint: { ...androidTextReset, color: colors.muted, fontFamily: font.body, fontWeight: '400', fontSize: 13, lineHeight: 18, marginBottom: 12 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 10, rowGap: 10 },
   whyActions: { gap: 11, marginTop: 22, marginBottom: 112 },
   changePick: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  changePickText: { color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', fontSize: 14 },
+  changePickText: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', fontSize: 14 },
   textAction: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  textActionLabel: { color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', fontSize: 14 },
+  textActionLabel: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '600', fontSize: 14 },
   bottomActions: { gap: 11, marginTop: 18, marginBottom: 112 },
 });

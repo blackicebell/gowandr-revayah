@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { ImageBackground, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ImageBackground, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Chip } from '../components/Chip';
 import { starterPhotos } from '../data/starterPhotos';
 import { paceGuidance } from '../logic/tripPace';
-import { colors, font, useThemeColors } from '../theme/colors';
+import { androidTextReset, colors, font, useThemeColors } from '../theme/colors';
 import { TripDraft } from '../types';
 
 const vibeTags = ['food', 'beach', 'culture', 'nature', 'nightlife', 'shopping', 'relax', 'stay'];
@@ -28,16 +28,22 @@ export function NewTripScreen({ onBack, onCreate, initialTrip, onUpdate, onDelet
   const createTrip = () => {
     const cleanTitle = title.trim();
     if (!cleanTitle) return;
+    const fallbackPhoto = starterPhotos[0]?.uri ?? '';
+    const heroImage = selectedPhoto.uri || initialTrip?.heroImage || fallbackPhoto;
+    const cleanTags = selectedTags.length ? selectedTags : ['relax'];
 
     const trip: TripDraft = {
+      ...(initialTrip ?? {}),
       id: initialTrip?.id ?? `trip-${Date.now()}`,
       title: cleanTitle,
-      subtitle: subtitle.trim() || buildSubtitle(selectedTags, companionType),
-      heroImage: selectedPhoto.uri,
-      tags: selectedTags,
+      subtitle: subtitle.trim() || buildSubtitle(cleanTags, companionType),
+      heroImage,
+      tags: cleanTags,
       pace,
       companionType,
       ideas: initialTrip?.ideas ?? [],
+      planChecklist: initialTrip?.planChecklist ?? [],
+      pocketItems: initialTrip?.pocketItems ?? [],
     };
 
     if (isEditing && onUpdate) onUpdate(trip);
@@ -132,7 +138,7 @@ export function NewTripScreen({ onBack, onCreate, initialTrip, onUpdate, onDelet
 
 function buildSubtitle(tags: string[], companionType: TripDraft['companionType']) {
   const topTags = tags.slice(0, 3);
-  if (!topTags.length) return `A ${companionType.toLowerCase()} trip idea ready for saved inspiration.`;
+  if (!topTags.length) return `A ${companionType.toLowerCase()} trip idea ready for saved links and notes.`;
   return `${capitalize(topTags.join(', '))} ideas for a ${companionType.toLowerCase()} trip.`;
 }
 
@@ -157,16 +163,16 @@ const styles = StyleSheet.create({
   photoChoice: { width: '48%', borderRadius: 20, borderWidth: 2, borderColor: 'transparent', overflow: 'hidden' },
   photo: { height: 112, justifyContent: 'flex-end' },
   photoImage: { borderRadius: 18 },
-  photoSelected: { alignSelf: 'flex-start', margin: 10, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.88)' },
-  photoSelectedText: { color: colors.tealDark, fontSize: 11, backgroundColor: 'transparent', includeFontPadding: false },
+  photoSelected: { alignSelf: 'flex-start', margin: 10, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.88)' },
+  photoSelectedText: { ...androidTextReset, color: colors.tealDark, fontSize: 11 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   paceCard: { borderRadius: 20, borderWidth: 1, padding: 14, marginTop: 10 },
   paceTitle: { fontSize: 16 },
   paceBody: { fontSize: 14, lineHeight: 20, marginTop: 5 },
   paceMeta: { fontSize: 12, marginTop: 9 },
-  actions: { marginTop: 22, marginBottom: 112 },
+  actions: { marginTop: 22, marginBottom: Platform.OS === 'ios' ? 156 : 168 },
   deleteArea: { marginTop: 18, paddingTop: 18, borderTopWidth: 1, borderTopColor: 'rgba(32,38,35,0.08)' },
-  deleteButton: { minHeight: 52, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(217,94,79,0.10)', borderWidth: 1, borderColor: 'rgba(217,94,79,0.24)' },
-  deleteText: { color: '#B84A3F', fontSize: 15, backgroundColor: 'transparent', includeFontPadding: false },
+  deleteButton: { minHeight: 52, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Platform.OS === 'android' ? '#FFF4F2' : 'rgba(217,94,79,0.10)', borderWidth: 1, borderColor: 'rgba(217,94,79,0.24)' },
+  deleteText: { ...androidTextReset, color: '#B84A3F', fontSize: 15 },
   deleteHint: { textAlign: 'center', fontSize: 13, lineHeight: 18, marginTop: 9 },
 });

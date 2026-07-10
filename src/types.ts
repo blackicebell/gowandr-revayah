@@ -7,6 +7,7 @@ export type TripIdea = {
   title: string;
   note?: string;
   link?: string;
+  needsLabel?: boolean;
   category: IdeaCategory;
   tags: string[];
   priority: IdeaPriority;
@@ -27,6 +28,29 @@ export type PlanChecklistItem = {
   category?: string;
 };
 
+export type PocketItemType = 'flight' | 'stay' | 'ticket' | 'reservation' | 'transport' | 'document' | 'note' | 'other';
+
+export type PocketItem = {
+  id: string;
+  type: PocketItemType;
+  title: string;
+  date?: string;
+  endDate?: string;
+  time?: string;
+  airline?: string;
+  from?: string;
+  to?: string;
+  place?: string;
+  city?: string;
+  confirmation?: string;
+  link?: string;
+  note?: string;
+  screenshotUri?: string;
+  pinned?: boolean;
+  createdAt: string;
+  updatedAt?: string;
+};
+
 export type TripDraft = {
   id: string;
   title: string;
@@ -42,6 +66,7 @@ export type TripDraft = {
   planCompletedAt?: string;
   latestMatchupResult?: MatchupResultSummary;
   planChecklist?: PlanChecklistItem[];
+  pocketItems?: PocketItem[];
 };
 
 export type VotePrompt = 'exciting' | 'easy' | 'mood' | 'commit' | 'memorable' | 'groupFit' | 'regret';

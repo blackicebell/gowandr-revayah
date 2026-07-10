@@ -19,15 +19,49 @@
     "preview": {
       "extends": "base",
       "environment": "preview",
-      "distribution": "internal"
+      "distribution": "internal",
+      "credentialsSource": "local",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_POCKET_DESIGN_PREVIEW": "true"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
     },
     "production": {
       "extends": "base",
       "environment": "production",
+      "autoIncrement": true,
+      "credentialsSource": "local"
+    },
+    "ios-production": {
+      "extends": "base",
+      "environment": "production",
       "autoIncrement": true
+    },
+    "android-local": {
+      "extends": "production",
+      "credentialsSource": "local"
+    },
+    "play-preview": {
+      "extends": "production",
+      "environment": "preview",
+      "credentialsSource": "local",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_POCKET_DESIGN_PREVIEW": "true"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6785278681"
+      }
+    }
   }
 }
