@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Image, ImageBackground, Linking, Modal, Platform, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { Button } from '../components/Button';
 import { androidTextReset, colors, font } from '../theme/colors';
@@ -24,6 +25,7 @@ type AddKind = 'screenshot' | 'note' | 'booking' | 'photo' | 'flight' | 'stay';
 type ShareSummaryOptions = {
   flights: boolean;
   stays: boolean;
+  essentials: boolean;
   codes: boolean;
   notes: boolean;
 };
@@ -53,13 +55,24 @@ const typeLabels: Record<PocketItemType, string> = {
 };
 
 const pocketTypes: PocketItemType[] = ['flight', 'stay', 'ticket', 'reservation', 'transport', 'document', 'note', 'other'];
+const pocketImageDirectory = FileSystem.documentDirectory ? `${FileSystem.documentDirectory}gowandr-pocket/` : undefined;
 
 const defaultShareOptions: ShareSummaryOptions = {
   flights: true,
   stays: true,
+  essentials: true,
   codes: true,
   notes: true,
 };
+
+const quickPocketLabels: Array<{ label: string; type: PocketItemType; title: string }> = [
+  { label: 'Flight', type: 'flight', title: 'Flight details' },
+  { label: 'Hotel', type: 'stay', title: 'Stay details' },
+  { label: 'Parking', type: 'transport', title: 'Parking details' },
+  { label: 'Reservation', type: 'reservation', title: 'Reservation details' },
+  { label: 'Ticket', type: 'ticket', title: 'Ticket details' },
+  { label: 'Other', type: 'other', title: 'Pocket screenshot' },
+];
 
 export function PocketScreen({
   trip,
@@ -98,9 +111,10 @@ export function PocketScreen({
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [shareOptions, setShareOptions] = useState<ShareSummaryOptions>(defaultShareOptions);
   const [selectedItem, setSelectedItem] = useState<PocketItem | undefined>();
+  const [nextImageFailed, setNextImageFailed] = useState(false);
   const items = trip?.pocketItems ?? [];
   const nextItem = useMemo(() => getNextPocketItem(items), [items]);
-  const groups = useMemo(() => groupPocketItems(items), [items]);
+  const groups = useMemo(() => groupPocketItems(items, trip), [items, trip]);
   const editingItem = editingItemId ? items.find((item) => item.id === editingItemId) : undefined;
 
   useEffect(() => {
@@ -112,6 +126,10 @@ export function PocketScreen({
     setIsQuickNoteOpen(false);
     setIsAddOpen(true);
   }, [quickCaptureRequest]);
+
+  useEffect(() => {
+    setNextImageFailed(false);
+  }, [nextItem?.screenshotUri]);
 
   if (!trip) {
     return <PocketNoTrip trips={trips} onBack={onBack} onSelectTrip={onSelectTrip} onCreateTrip={onCreateTrip} />;
@@ -267,7 +285,13 @@ export function PocketScreen({
       <Text style={styles.nextKicker}>Need it now</Text>
       <Text style={styles.nextTitle}>{nextItem ? nextItem.title : 'Nothing saved yet'}</Text>
       <Text style={styles.nextBody}>{nextItem ? getPocketItemDetail(nextItem) : 'This is where your boarding pass, hotel confirmation, or reservation will appear when you need it most.'}</Text>
-      {nextItem?.screenshotUri && <Image source={{ uri: nextItem.screenshotUri }} style={styles.nextImage} resizeMode="cover" />}
+      {nextItem?.screenshotUri && !nextImageFailed && <Image source={{ uri: nextItem.screenshotUri }} style={styles.nextImage} resizeMode="cover" onError={() => setNextImageFailed(true)} />}
+      {nextItem?.screenshotUri && nextImageFailed && (
+        <View style={styles.nextMissingImage}>
+          <Text style={styles.nextMissingTitle}>Photo unavailable</Text>
+          <Text style={styles.nextMissingText}>Open this item and reattach it.</Text>
+        </View>
+      )}
       {!nextItem && <NeedItNowPromise />}
     </TouchableOpacity>
   );
@@ -385,6 +409,7 @@ export function PocketScreen({
                 }}
                 onLater={saveDraftLater}
                 onDateChange={(date) => setDraft((current) => ({ ...current, date }))}
+                onQuickLabelChange={(label) => setDraft((current) => applyQuickPocketLabel(current, label))}
                 onCancel={cancelDraftUpload}
               />
             </View>
@@ -412,12 +437,20 @@ export function PocketScreen({
           <PocketSection title="Today" items={groups.today} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Tomorrow" items={groups.tomorrow} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Upcoming" items={groups.upcoming} onOpen={setSelectedItem} onEdit={editItem} />
+          <PocketSection title="Earlier This Trip" items={groups.earlier} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Pinned" items={groups.pinned} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Undated" items={groups.undated} onOpen={setSelectedItem} onEdit={editItem} />
+          <PocketSection title="Trip Archive" items={groups.archive} onOpen={setSelectedItem} onEdit={editItem} />
         </View>
       )}
 
-      <PocketViewer item={selectedItem} onClose={() => setSelectedItem(undefined)} onEdit={editItem} onDelete={confirmDeleteItem} />
+      <PocketViewer
+        item={selectedItem}
+        onClose={() => setSelectedItem(undefined)}
+        onEdit={editItem}
+        onDelete={confirmDeleteItem}
+        onTogglePin={(item) => onUpdateItem(trip.id, { ...item, pinned: item.pinned ? undefined : true, updatedAt: new Date().toISOString() })}
+      />
     </View>
   );
 }
@@ -493,6 +526,7 @@ function ShareSummaryPanel({
       <Text style={styles.sharePanelBody}>Create a clean trip summary for someone you trust.</Text>
       <ShareOption label="Flights" active={options.flights} onPress={() => onToggle('flights')} />
       <ShareOption label="Stays" active={options.stays} onPress={() => onToggle('stays')} />
+      <ShareOption label="Other essentials" active={options.essentials} onPress={() => onToggle('essentials')} />
       <ShareOption label="Confirmation codes" active={options.codes} onPress={() => onToggle('codes')} />
       <ShareOption label="Notes" active={options.notes} onPress={() => onToggle('notes')} />
       <Button label="Share Summary" onPress={onShare} />
@@ -542,12 +576,14 @@ function PocketReviewCard({
   onNow,
   onLater,
   onDateChange,
+  onQuickLabelChange,
   onCancel,
 }: {
   draft: PocketDraft;
   onNow: () => void;
   onLater: () => void;
   onDateChange: (date: string) => void;
+  onQuickLabelChange: (label: (typeof quickPocketLabels)[number]) => void;
   onCancel: () => void;
 }) {
   const [dateOpen, setDateOpen] = useState(false);
@@ -559,6 +595,19 @@ function PocketReviewCard({
       <View style={styles.reviewCopy}>
         <Text style={styles.reviewTitle}>Save this to Pocket?</Text>
         <Text style={styles.reviewBody}>Keep it quick, or add a label or note so it is easier to find later.</Text>
+        <View style={styles.quickLabelBlock}>
+          <Text style={styles.quickLabelTitle}>What is this?</Text>
+          <View style={styles.quickLabelChips}>
+            {quickPocketLabels.map((label) => {
+              const active = draft.type === label.type && (draft.title === label.title || !draft.title.trim());
+              return (
+                <TouchableOpacity key={label.label} onPress={() => onQuickLabelChange(label)} style={[styles.quickLabelChip, active && styles.quickLabelChipActive]}>
+                  <Text style={[styles.quickLabelChipText, active && styles.quickLabelChipTextActive]}>{label.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
         <TouchableOpacity onPress={() => setDateOpen((current) => !current)} style={styles.reviewDateToggle}>
           <Text style={styles.reviewDateToggleText}>{draft.date ? formatDisplayDate(draft.date) : 'Add date'}</Text>
           <Text style={styles.reviewDateToggleAction}>{dateOpen ? 'Close' : 'Optional'}</Text>
@@ -732,7 +781,7 @@ function PocketFields({
           <PocketInput label="Confirmation code" value={draft.confirmation} onChangeText={(value) => setField('confirmation', value)} placeholder="Optional" />
           <PocketInput label="Link" value={draft.link} onChangeText={(value) => setField('link', value)} placeholder="Optional booking link" keyboardType="url" autoCapitalize="none" />
           <TouchableOpacity onPress={() => setField('pinned', !draft.pinned)} style={[styles.pinToggle, draft.pinned && styles.pinToggleActive]}>
-            <Text style={[styles.pinToggleText, draft.pinned && styles.pinToggleTextActive]}>{draft.pinned ? 'Pinned near the top' : 'Pin near the top'}</Text>
+            <Text style={[styles.pinToggleText, draft.pinned && styles.pinToggleTextActive]}>{draft.pinned ? 'Pinned to Need It Now' : 'Pin to Need It Now'}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -917,14 +966,26 @@ function PocketSection({
 }
 
 function PocketItemCard({ item, onOpen, onEdit, compact = false }: { item: PocketItem; onOpen: () => void; onEdit: () => void; compact?: boolean }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const canShowImage = !!item.screenshotUri && !imageFailed;
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [item.screenshotUri]);
+
   return (
     <TouchableOpacity onPress={onOpen} activeOpacity={0.86} style={[styles.pocketCard, compact && styles.pocketCardCompact]}>
-      {item.screenshotUri ? (
+      {canShowImage ? (
         <View style={[styles.cardThumbFrame, compact && styles.cardThumbFrameCompact]}>
-          <Image source={{ uri: item.screenshotUri }} style={styles.cardThumbImage} resizeMode="cover" />
+          <Image source={{ uri: item.screenshotUri }} style={styles.cardThumbImage} resizeMode="cover" onError={() => setImageFailed(true)} />
           <View style={[styles.cardThumbCue, compact && styles.cardThumbCueCompact]}>
             <Text style={styles.cardThumbCueText}>View</Text>
           </View>
+        </View>
+      ) : item.screenshotUri ? (
+        <View style={[styles.cardThumbMissing, compact && styles.cardThumbCompact]}>
+          <Text style={styles.cardThumbMissingTitle}>Photo</Text>
+          <Text style={styles.cardThumbMissingText}>Reattach</Text>
         </View>
       ) : (
         <View style={[styles.cardThumbEmpty, compact && styles.cardThumbCompact]}>
@@ -947,8 +1008,26 @@ function PocketItemCard({ item, onOpen, onEdit, compact = false }: { item: Pocke
   );
 }
 
-function PocketViewer({ item, onClose, onEdit, onDelete }: { item?: PocketItem; onClose: () => void; onEdit: (item: PocketItem) => void; onDelete: (item: PocketItem) => void }) {
+function PocketViewer({
+  item,
+  onClose,
+  onEdit,
+  onDelete,
+  onTogglePin,
+}: {
+  item?: PocketItem;
+  onClose: () => void;
+  onEdit: (item: PocketItem) => void;
+  onDelete: (item: PocketItem) => void;
+  onTogglePin: (item: PocketItem) => void;
+}) {
   const [imageOpen, setImageOpen] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageOpen(false);
+    setImageFailed(false);
+  }, [item?.screenshotUri]);
 
   if (!item) return null;
   return (
@@ -967,13 +1046,18 @@ function PocketViewer({ item, onClose, onEdit, onDelete }: { item?: PocketItem; 
             </TouchableOpacity>
           </View>
         </View>
-        {item.screenshotUri ? (
+        {item.screenshotUri && !imageFailed ? (
           <TouchableOpacity onPress={() => setImageOpen(true)} activeOpacity={0.92} style={styles.viewerImageButton}>
-            <Image source={{ uri: item.screenshotUri }} style={styles.viewerImage} resizeMode="contain" />
+            <Image source={{ uri: item.screenshotUri }} style={styles.viewerImage} resizeMode="contain" onError={() => setImageFailed(true)} />
             <View style={styles.viewerImageCue}>
               <Text style={styles.viewerImageCueText}>Tap to enlarge</Text>
             </View>
           </TouchableOpacity>
+        ) : item.screenshotUri ? (
+          <View style={styles.viewerMissingImage}>
+            <Text style={styles.viewerMissingTitle}>Photo unavailable</Text>
+            <Text style={styles.viewerMissingText}>The saved details are still here. Reattach the photo to keep it in Pocket.</Text>
+          </View>
         ) : (
           <View style={styles.viewerEmptyImage}>
             <Text style={styles.viewerEmptyText}>{typeLabels[item.type]}</Text>
@@ -990,7 +1074,10 @@ function PocketViewer({ item, onClose, onEdit, onDelete }: { item?: PocketItem; 
               <Text style={styles.openLinkText}>Open link</Text>
             </TouchableOpacity>
           )}
-          {!!item.screenshotUri && (
+          <TouchableOpacity onPress={() => onTogglePin(item)} style={[styles.pinNeedButton, item.pinned && styles.pinNeedButtonActive]}>
+            <Text style={[styles.pinNeedText, item.pinned && styles.pinNeedTextActive]}>{item.pinned ? 'Pinned to Need It Now' : 'Pin to Need It Now'}</Text>
+          </TouchableOpacity>
+          {!!item.screenshotUri && !imageFailed && (
             <TouchableOpacity onPress={() => setImageOpen(true)} style={styles.openImageButton}>
               <Text style={styles.openImageText}>View full screen</Text>
             </TouchableOpacity>
@@ -1064,7 +1151,47 @@ async function pickImage() {
     mediaTypes: ImagePicker.MediaTypeOptions.Images,
     quality: 0.9,
   });
-  return !result.canceled && result.assets[0]?.uri ? result.assets[0].uri : undefined;
+  const uri = !result.canceled && result.assets[0]?.uri ? result.assets[0].uri : undefined;
+  return uri ? savePocketImage(uri) : undefined;
+}
+
+async function savePocketImage(uri: string) {
+  if (!pocketImageDirectory) {
+    Alert.alert('Photo not saved', 'GoWandr could not access app storage for Pocket. Please try again.');
+    return undefined;
+  }
+
+  if (uri.startsWith(pocketImageDirectory)) {
+    const existing = await FileSystem.getInfoAsync(uri);
+    return existing.exists ? uri : undefined;
+  }
+
+  if (uri.startsWith('http') || uri.startsWith('data:') || uri.startsWith('asset:')) {
+    Alert.alert('Photo not saved', 'Choose a photo from your library so GoWandr can keep its own Pocket copy.');
+    return undefined;
+  }
+
+  try {
+    await FileSystem.makeDirectoryAsync(pocketImageDirectory, { intermediates: true });
+    const destination = `${pocketImageDirectory}pocket-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${getImageExtension(uri)}`;
+    await FileSystem.copyAsync({ from: uri, to: destination });
+    const saved = await FileSystem.getInfoAsync(destination);
+    if (saved.exists) return destination;
+  } catch {
+    // The alert below handles every copy failure the same way for the user.
+  }
+
+  Alert.alert('Photo not saved', 'GoWandr could not make a durable Pocket copy of this photo. Please try again or choose a different image.');
+  return undefined;
+}
+
+function getImageExtension(uri: string) {
+  const cleanUri = uri.split('?')[0]?.toLowerCase() ?? '';
+  const match = cleanUri.match(/\.([a-z0-9]+)$/);
+  const extension = match?.[1];
+  if (extension === 'jpeg') return 'jpg';
+  if (extension && ['jpg', 'png', 'heic', 'heif', 'webp', 'gif'].includes(extension)) return extension;
+  return 'jpg';
 }
 
 function getDraftForAddKind(kind: AddKind): PocketDraft {
@@ -1120,6 +1247,15 @@ function pocketDraftSignature(draft: PocketDraft) {
   });
 }
 
+function applyQuickPocketLabel(draft: PocketDraft, label: (typeof quickPocketLabels)[number]): PocketDraft {
+  const genericTitle = !draft.title.trim() || quickPocketLabels.some((item) => item.title === draft.title);
+  return {
+    ...draft,
+    type: label.type,
+    title: genericTitle ? label.title : draft.title,
+  };
+}
+
 function buildPocketItem(draft: PocketDraft, editingItemId: string | undefined, now: string): PocketItem {
   return {
     id: editingItemId ?? `pocket-${Date.now()}`,
@@ -1161,6 +1297,12 @@ function getNextPocketItem(items: PocketItem[]) {
   const now = new Date();
   const today = getDateOffset(0);
   const tomorrow = getDateOffset(1);
+
+  const pinned = [...items]
+    .filter((item) => item.pinned)
+    .sort((left, right) => getNeedItNowPriority(left, now) - getNeedItNowPriority(right, now))[0];
+  if (pinned) return pinned;
+
   const todayItems = [...items]
     .filter((item) => item.date === today)
     .sort((left, right) => getItemDateTime(left).getTime() - getItemDateTime(right).getTime());
@@ -1168,30 +1310,54 @@ function getNextPocketItem(items: PocketItem[]) {
   if (upcomingToday) return upcomingToday;
   if (todayItems.length) return todayItems[todayItems.length - 1];
 
-  const pinned = items.find((item) => item.pinned);
-  if (pinned) return pinned;
-
   const dated = [...items]
     .filter((item) => item.date)
     .sort((left, right) => getSortTime(left) - getSortTime(right));
   return dated.find((item) => item.date === tomorrow) ?? dated.find((item) => getSortTime(item) >= startOfDay(now).getTime()) ?? items[0];
 }
 
-function groupPocketItems(items: PocketItem[]) {
+function groupPocketItems(items: PocketItem[], trip?: TripDraft) {
   const today = getDateOffset(0);
   const tomorrow = getDateOffset(1);
   const sorted = [...items].sort((left, right) => getSortTime(left) - getSortTime(right));
   const recent = [...items]
     .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
     .slice(0, 3);
+  const archiveCutoff = getArchiveCutoffDate(trip);
+  const shouldArchive = (item: PocketItem) => Boolean(item.date && archiveCutoff && item.date <= archiveCutoff);
   return {
     recent,
     pinned: sorted.filter((item) => item.pinned),
     today: sorted.filter((item) => item.date === today && !item.pinned),
     tomorrow: sorted.filter((item) => item.date === tomorrow && !item.pinned),
     upcoming: sorted.filter((item) => item.date && item.date > tomorrow && !item.pinned),
+    earlier: sorted.filter((item) => item.date && item.date < today && !item.pinned && !shouldArchive(item)).reverse(),
     undated: sorted.filter((item) => !item.date && !item.pinned),
+    archive: sorted.filter((item) => !item.pinned && shouldArchive(item)).reverse(),
   };
+}
+
+function getNeedItNowPriority(item: PocketItem, now: Date) {
+  const itemTime = getItemDateTime(item).getTime();
+  if (item.date && itemTime >= now.getTime() - 30 * 60 * 1000) return itemTime;
+  return Number.MAX_SAFE_INTEGER - new Date(item.updatedAt ?? item.createdAt).getTime();
+}
+
+function getArchiveCutoffDate(trip?: TripDraft) {
+  const today = getDateOffset(0);
+  if (trip?.planEndDate) {
+    const archiveStart = addDays(trip.planEndDate, 3);
+    return today > archiveStart ? trip.planEndDate : undefined;
+  }
+
+  return addDays(today, -7);
+}
+
+function addDays(dateValue: string, days: number) {
+  const parsed = parseDateValue(dateValue);
+  if (!parsed) return dateValue;
+  parsed.setDate(parsed.getDate() + days);
+  return formatDateValue(parsed);
 }
 
 function getSortTime(item: PocketItem) {
@@ -1304,6 +1470,7 @@ function buildTravelSummary(trip: TripDraft, items: PocketItem[], options: Share
   const sections: string[] = [];
   if (options.flights) sections.push(formatSummarySection('Flights', items.filter(isFlightItem)));
   if (options.stays) sections.push(formatSummarySection('Stays', items.filter(isStayItem)));
+  if (options.essentials) sections.push(formatSummarySection('Other essentials', items.filter(isEssentialItem)));
   if (options.codes) sections.push(formatCodeSection(items.filter((item) => !!item.confirmation)));
   if (options.notes) sections.push(formatNoteSection(items.filter((item) => !!item.note || item.type === 'note')));
 
@@ -1344,6 +1511,10 @@ function isStayItem(item: PocketItem) {
   return item.type === 'stay' || value.includes('hotel') || value.includes('stay') || value.includes('check-in') || value.includes('check in');
 }
 
+function isEssentialItem(item: PocketItem) {
+  return !isFlightItem(item) && !isStayItem(item) && item.type !== 'note';
+}
+
 function formatDateRange(start?: string, end?: string) {
   if (start && end) return `${start} to ${end}`;
   return start ?? '';
@@ -1376,6 +1547,9 @@ const styles = StyleSheet.create({
   nextTitle: { ...androidTextReset, color: colors.white, fontFamily: font.heading, fontWeight: '800', fontSize: 22, lineHeight: 27 },
   nextBody: { ...androidTextReset, color: 'rgba(248,248,246,0.78)', fontFamily: font.body, fontSize: 14, lineHeight: 20 },
   nextImage: { width: '100%', height: 170, borderRadius: 18, marginTop: 4 },
+  nextMissingImage: { minHeight: 116, borderRadius: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, marginTop: 4, backgroundColor: 'rgba(255,241,239,0.12)', borderWidth: 1, borderColor: 'rgba(255,241,239,0.18)' },
+  nextMissingTitle: { ...androidTextReset, color: '#FFE4DF', fontFamily: font.heading, fontWeight: '800', fontSize: 18, textAlign: 'center' },
+  nextMissingText: { ...androidTextReset, color: 'rgba(248,248,246,0.68)', fontFamily: font.body, fontSize: 13, marginTop: 4, textAlign: 'center' },
   promiseCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4, borderRadius: 18, padding: 12, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(248,248,246,0.10)', opacity: 0.72 },
   promiseIcon: { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(248,248,246,0.12)' },
   promiseIconText: { ...androidTextReset, color: '#A8F0D4', fontFamily: font.semibold, fontWeight: '800', fontSize: 12 },
@@ -1434,6 +1608,13 @@ const styles = StyleSheet.create({
   reviewCopy: { minWidth: 0, paddingTop: 16 },
   reviewTitle: { ...androidTextReset, color: colors.charcoal, fontFamily: font.heading, fontWeight: '800', fontSize: 26, lineHeight: 31 },
   reviewBody: { ...androidTextReset, color: colors.muted, fontFamily: font.body, fontSize: 14.5, lineHeight: 21, marginTop: 6 },
+  quickLabelBlock: { marginTop: 14 },
+  quickLabelTitle: { ...androidTextReset, color: 'rgba(32,38,35,0.62)', fontFamily: font.semibold, fontWeight: '800', fontSize: 11, marginBottom: 8, textTransform: 'uppercase' },
+  quickLabelChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  quickLabelChip: { minHeight: 38, borderRadius: 999, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAF9', borderWidth: 1, borderColor: 'rgba(32,38,35,0.08)' },
+  quickLabelChipActive: { backgroundColor: '#CFF8E9', borderColor: 'rgba(47,175,138,0.26)' },
+  quickLabelChipText: { ...androidTextReset, color: 'rgba(32,38,35,0.64)', fontFamily: font.semibold, fontWeight: '800', fontSize: 12 },
+  quickLabelChipTextActive: { color: colors.tealDark },
   reviewDateToggle: { minHeight: 46, borderRadius: 16, paddingHorizontal: 13, marginTop: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, backgroundColor: '#F8FAF9', borderWidth: 1, borderColor: 'rgba(32,38,35,0.08)' },
   reviewDateToggleText: { ...androidTextReset, flex: 1, color: colors.charcoal, fontFamily: font.semibold, fontWeight: '800', fontSize: 13.5 },
   reviewDateToggleAction: { ...androidTextReset, color: 'rgba(32,38,35,0.48)', fontFamily: font.semibold, fontWeight: '800', fontSize: 12 },
@@ -1530,6 +1711,9 @@ const styles = StyleSheet.create({
   cardThumbCompact: { width: 54, height: 62, borderRadius: 15 },
   cardThumbEmpty: { width: 78, height: 92, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#EEF2F0' },
   cardThumbEmptyText: { ...androidTextReset, color: 'rgba(32,38,35,0.44)', fontFamily: font.semibold, fontWeight: '800', fontSize: 16 },
+  cardThumbMissing: { width: 78, height: 92, borderRadius: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6, backgroundColor: '#FFF1EF', borderWidth: 1, borderColor: 'rgba(184,74,63,0.18)' },
+  cardThumbMissingTitle: { ...androidTextReset, color: '#B84A3F', fontFamily: font.semibold, fontWeight: '800', fontSize: 12 },
+  cardThumbMissingText: { ...androidTextReset, color: 'rgba(184,74,63,0.72)', fontFamily: font.body, fontSize: 10.5, marginTop: 3, textAlign: 'center' },
   pocketCopy: { flex: 1, minWidth: 0 },
   pocketMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
   pocketType: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '800', fontSize: 10.5, textTransform: 'uppercase' },
@@ -1550,6 +1734,9 @@ const styles = StyleSheet.create({
   viewerImage: { width: '100%', height: '100%', backgroundColor: '#0F1115' },
   viewerImageCue: { position: 'absolute', right: 14, bottom: 14, minHeight: 34, borderRadius: 999, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(15,17,21,0.72)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
   viewerImageCueText: { ...androidTextReset, color: '#FFFFFF', fontFamily: font.semibold, fontWeight: '800', fontSize: 12 },
+  viewerMissingImage: { width: '100%', height: '34%', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 34, backgroundColor: '#FFF1EF' },
+  viewerMissingTitle: { ...androidTextReset, color: '#B84A3F', fontFamily: font.heading, fontWeight: '800', fontSize: 24, textAlign: 'center' },
+  viewerMissingText: { ...androidTextReset, color: 'rgba(32,38,35,0.66)', fontFamily: font.body, fontSize: 14.5, lineHeight: 21, marginTop: 8, textAlign: 'center' },
   viewerEmptyImage: { width: '100%', height: '34%', alignItems: 'center', justifyContent: 'center', backgroundColor: '#10231D' },
   viewerEmptyText: { ...androidTextReset, color: '#A8F0D4', fontFamily: font.heading, fontWeight: '800', fontSize: 24 },
   viewerCopy: { padding: 18 },
@@ -1560,6 +1747,10 @@ const styles = StyleSheet.create({
   viewerNote: { ...androidTextReset, color: 'rgba(32,38,35,0.74)', fontFamily: font.body, fontSize: 15, lineHeight: 22, marginTop: 12 },
   openLinkButton: { minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 16, backgroundColor: '#173A33' },
   openLinkText: { ...androidTextReset, color: colors.white, fontFamily: font.semibold, fontWeight: '800', fontSize: 14 },
+  pinNeedButton: { minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 16, backgroundColor: '#E9FBF4', borderWidth: 1, borderColor: 'rgba(47,175,138,0.22)' },
+  pinNeedButtonActive: { backgroundColor: '#173A33', borderColor: '#173A33' },
+  pinNeedText: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '800', fontSize: 14 },
+  pinNeedTextActive: { color: colors.white },
   openImageButton: { minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 16, backgroundColor: '#173A33' },
   openImageText: { ...androidTextReset, color: colors.white, fontFamily: font.semibold, fontWeight: '800', fontSize: 14 },
   zoomViewer: { flex: 1, backgroundColor: '#050807', paddingTop: Platform.OS === 'ios' ? 54 : 24 },

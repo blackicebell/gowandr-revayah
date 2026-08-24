@@ -32,8 +32,11 @@
     "production": {
       "extends": "base",
       "environment": "production",
+      "credentialsSource": "local",
       "autoIncrement": true,
-      "credentialsSource": "local"
+      "android": {
+        "buildType": "app-bundle"
+      }
     },
     "ios-production": {
       "extends": "base",

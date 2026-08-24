@@ -28,6 +28,7 @@ import { PressableScale } from './src/components/PressableScale';
 import { starterPhotos } from './src/data/starterPhotos';
 import { RevenueCatProvider, useRevenueCat } from './src/paywall/RevenueCatProvider';
 import { SuperwallRoot, SuperwallUpgradeButton, useSuperwallUpgradePrompt } from './src/paywall/superwall';
+import { maybeRequestReviewAfterPocketSave } from './src/services/reviewPrompt';
 
 type PatchedText = typeof Text & {
   defaultProps?: { style?: unknown };
@@ -416,10 +417,16 @@ function AppContent() {
   };
 
   const addPocketItem = (tripId: string, item: PocketItem) => {
+    const totalPocketItems = trips.reduce((count, trip) => count + (trip.pocketItems?.length ?? 0), 0) + 1;
     setTrips((current) =>
-      current.map((trip) => (trip.id === tripId ? { ...trip, pocketItems: [item, ...(trip.pocketItems ?? [])] } : trip)),
+      current.map((trip) => {
+        if (trip.id !== tripId) return trip;
+        const pocketItems = [item, ...(trip.pocketItems ?? [])];
+        return { ...trip, pocketItems };
+      }),
     );
     setMomentumMessage('Saved to Pocket.');
+    maybeRequestReviewAfterPocketSave(totalPocketItems).catch(() => undefined);
   };
 
   const updatePocketItem = (tripId: string, item: PocketItem) => {

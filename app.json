@@ -2,7 +2,7 @@
   "expo": {
     "name": "GoWandr",
     "slug": "gowandr",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "default",
     "icon": "./assets/brand/gowandr-logo-icon-color.png",
     "userInterfaceStyle": "light",
@@ -17,6 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.gowandr.app",
+      "appStoreUrl": "https://apps.apple.com/app/id6785278681",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -28,6 +29,7 @@
         "backgroundColor": "#F8F4EC"
       },
       "package": "com.gowandr.mobile",
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.gowandr.mobile",
       "permissions": [
         "com.android.vending.BILLING"
       ]
@@ -42,7 +44,9 @@
         "expo-build-properties",
         {
           "android": {
-            "minSdkVersion": 24
+            "minSdkVersion": 24,
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
           }
         }
       ]
