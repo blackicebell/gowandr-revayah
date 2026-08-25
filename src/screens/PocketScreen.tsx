@@ -258,6 +258,12 @@ export function PocketScreen({
     ]);
   };
 
+  const togglePinItem = (item: PocketItem) => {
+    const nextItem = { ...item, pinned: item.pinned ? undefined : true, updatedAt: new Date().toISOString() };
+    setSelectedItem(nextItem);
+    onUpdateItem(trip.id, nextItem);
+  };
+
   const shareTravelSummary = async () => {
     const message = buildTravelSummary(trip, items, shareOptions);
     await Share.share({
@@ -450,7 +456,7 @@ export function PocketScreen({
         onClose={() => setSelectedItem(undefined)}
         onEdit={editItem}
         onDelete={confirmDeleteItem}
-        onTogglePin={(item) => onUpdateItem(trip.id, { ...item, pinned: item.pinned ? undefined : true, updatedAt: new Date().toISOString() })}
+        onTogglePin={togglePinItem}
       />
     </View>
   );
@@ -1024,13 +1030,25 @@ function PocketViewer({
 }) {
   const [imageOpen, setImageOpen] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [pinFeedback, setPinFeedback] = useState('');
 
   useEffect(() => {
     setImageOpen(false);
     setImageFailed(false);
+    setPinFeedback('');
   }, [item?.screenshotUri]);
 
+  useEffect(() => {
+    setPinFeedback('');
+  }, [item?.id]);
+
   if (!item) return null;
+  const handleTogglePin = () => {
+    const nextPinned = !item.pinned;
+    onTogglePin(item);
+    setPinFeedback(nextPinned ? 'Moved to Need It Now.' : 'Removed from Need It Now.');
+  };
+
   return (
     <Modal visible animationType="slide" presentationStyle="fullScreen">
       <View style={styles.viewer}>
@@ -1075,9 +1093,10 @@ function PocketViewer({
               <Text style={styles.openLinkText}>Open link</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={() => onTogglePin(item)} style={[styles.pinNeedButton, item.pinned && styles.pinNeedButtonActive]}>
+          <TouchableOpacity onPress={handleTogglePin} style={[styles.pinNeedButton, item.pinned && styles.pinNeedButtonActive]}>
             <Text style={[styles.pinNeedText, item.pinned && styles.pinNeedTextActive]}>{item.pinned ? 'Pinned to Need It Now' : 'Pin to Need It Now'}</Text>
           </TouchableOpacity>
+          {!!pinFeedback && <Text style={styles.pinFeedbackText}>{pinFeedback}</Text>}
           {!!item.screenshotUri && !imageFailed && (
             <TouchableOpacity onPress={() => setImageOpen(true)} style={styles.openImageButton}>
               <Text style={styles.openImageText}>View full screen</Text>
@@ -1778,6 +1797,7 @@ const styles = StyleSheet.create({
   pinNeedButtonActive: { backgroundColor: '#173A33', borderColor: '#173A33' },
   pinNeedText: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '800', fontSize: 14 },
   pinNeedTextActive: { color: colors.white },
+  pinFeedbackText: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '800', fontSize: 12.5, textAlign: 'center', marginTop: 8 },
   openImageButton: { minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 16, backgroundColor: '#173A33' },
   openImageText: { ...androidTextReset, color: colors.white, fontFamily: font.semibold, fontWeight: '800', fontSize: 14 },
   zoomViewer: { flex: 1, backgroundColor: '#050807', paddingTop: Platform.OS === 'ios' ? 54 : 24 },
