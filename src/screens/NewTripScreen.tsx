@@ -24,6 +24,7 @@ export function NewTripScreen({ onBack, onCreate, initialTrip, onUpdate, onDelet
   const [companionType, setCompanionType] = useState<TripDraft['companionType']>(initialTrip?.companionType ?? 'Friends');
   const [step, setStep] = useState<1 | 2>(initialTrip ? 2 : 1);
   const canContinue = !!title.trim();
+  const shouldShowNameRequired = !isEditing && step === 1 && !canContinue;
 
   const createTrip = () => {
     const cleanTitle = title.trim();
@@ -64,7 +65,23 @@ export function NewTripScreen({ onBack, onCreate, initialTrip, onUpdate, onDelet
         </View>
       )}
 
-      <TextInput value={title} onChangeText={setTitle} placeholder="Example: Istanbul food weekend" placeholderTextColor={theme.muted} style={[styles.input, { backgroundColor: theme.paper, borderColor: theme.line, color: theme.charcoal, fontFamily: font.body }]} />
+      <View style={[styles.nameFieldCard, shouldShowNameRequired && styles.nameFieldCardRequired, { backgroundColor: theme.paper, borderColor: shouldShowNameRequired ? '#2FAF8A' : theme.line }]}>
+        <View style={styles.nameLabelRow}>
+          <Text style={[styles.nameLabel, { color: theme.charcoal, fontFamily: font.heading }]}>Name this trip</Text>
+          <Text style={[styles.requiredPill, { fontFamily: font.semibold }]}>Required</Text>
+        </View>
+        <Text style={[styles.nameHelper, { color: theme.muted, fontFamily: font.body }]}>Give it a simple working name so you can find it later.</Text>
+        <TextInput
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Example: Istanbul food weekend"
+          placeholderTextColor={theme.muted}
+          autoFocus={!isEditing}
+          returnKeyType="next"
+          accessibilityLabel="Trip name"
+          style={[styles.input, styles.nameInput, { backgroundColor: '#FFFFFF', borderColor: shouldShowNameRequired ? '#2FAF8A' : theme.line, color: theme.charcoal, fontFamily: font.body }]}
+        />
+      </View>
 
       <Text style={[styles.label, { color: theme.charcoal, fontFamily: font.heading }]}>Choose a starter photo</Text>
       <Text style={[styles.helper, { color: theme.muted, fontFamily: font.body }]}>Pick one image to set the mood. This is only a cover, not a promise.</Text>
@@ -118,6 +135,9 @@ export function NewTripScreen({ onBack, onCreate, initialTrip, onUpdate, onDelet
       )}
 
       <View style={styles.actions}>
+        {shouldShowNameRequired && (
+          <Text style={[styles.actionHint, { color: theme.muted, fontFamily: font.body }]}>Add a trip name to continue.</Text>
+        )}
         {!isEditing && step === 1 ? (
           <Button label="Next: Add the trip feel" disabled={!canContinue} onPress={() => setStep(2)} />
         ) : (
@@ -151,6 +171,13 @@ const styles = StyleSheet.create({
   title: { fontWeight: '700', fontSize: 38, lineHeight: 46, letterSpacing: -0.38 },
   body: { fontSize: 16, lineHeight: 23, marginTop: 8, marginBottom: 18 },
   input: { minHeight: 54, borderRadius: 18, borderWidth: 1, paddingHorizontal: 16, fontSize: 15, marginBottom: 10 },
+  nameFieldCard: { borderRadius: 22, borderWidth: 1, padding: 14, marginBottom: 14 },
+  nameFieldCardRequired: { shadowColor: '#2FAF8A', shadowOpacity: Platform.OS === 'ios' ? 0.12 : 0, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'android' ? 1 : 0 },
+  nameLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  nameLabel: { ...androidTextReset, fontWeight: '800', fontSize: 20, lineHeight: 25 },
+  requiredPill: { ...androidTextReset, color: colors.tealDark, fontSize: 11, textTransform: 'uppercase', paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999, backgroundColor: '#E9FBF4', overflow: 'hidden' },
+  nameHelper: { ...androidTextReset, fontSize: 13.5, lineHeight: 19, marginTop: 5, marginBottom: 10 },
+  nameInput: { marginBottom: 0 },
   noteInput: { marginTop: 18, marginBottom: 18 },
   stepper: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, marginBottom: 16 },
   stepDot: { width: 11, height: 11, borderRadius: 999, backgroundColor: 'rgba(32,38,35,0.12)' },
@@ -171,6 +198,7 @@ const styles = StyleSheet.create({
   paceBody: { fontSize: 14, lineHeight: 20, marginTop: 5 },
   paceMeta: { fontSize: 12, marginTop: 9 },
   actions: { marginTop: 22, marginBottom: Platform.OS === 'ios' ? 156 : 168 },
+  actionHint: { ...androidTextReset, textAlign: 'center', fontSize: 13.5, lineHeight: 19, marginBottom: 10 },
   deleteArea: { marginTop: 18, paddingTop: 18, borderTopWidth: 1, borderTopColor: 'rgba(32,38,35,0.08)' },
   deleteButton: { minHeight: 52, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Platform.OS === 'android' ? '#FFF4F2' : 'rgba(217,94,79,0.10)', borderWidth: 1, borderColor: 'rgba(217,94,79,0.24)' },
   deleteText: { ...androidTextReset, color: '#B84A3F', fontSize: 15 },
