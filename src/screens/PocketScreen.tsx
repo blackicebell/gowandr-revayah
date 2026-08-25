@@ -111,7 +111,6 @@ export function PocketScreen({
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [shareOptions, setShareOptions] = useState<ShareSummaryOptions>(defaultShareOptions);
   const [selectedItem, setSelectedItem] = useState<PocketItem | undefined>();
-  const [nextImageFailed, setNextImageFailed] = useState(false);
   const items = trip?.pocketItems ?? [];
   const nextItem = useMemo(() => getNextPocketItem(items), [items]);
   const groups = useMemo(() => groupPocketItems(items, trip), [items, trip]);
@@ -126,10 +125,6 @@ export function PocketScreen({
     setIsQuickNoteOpen(false);
     setIsAddOpen(true);
   }, [quickCaptureRequest]);
-
-  useEffect(() => {
-    setNextImageFailed(false);
-  }, [nextItem?.screenshotUri]);
 
   if (!trip) {
     return <PocketNoTrip trips={trips} onBack={onBack} onSelectTrip={onSelectTrip} onCreateTrip={onCreateTrip} />;
@@ -287,22 +282,6 @@ export function PocketScreen({
     </>
   );
 
-  const needItNowCard = (
-    <TouchableOpacity activeOpacity={nextItem ? 0.86 : 1} onPress={() => nextItem && setSelectedItem(nextItem)} style={styles.nextCard}>
-      <Text style={styles.nextKicker}>Need it now</Text>
-      <Text style={styles.nextTitle}>{nextItem ? nextItem.title : 'Nothing saved yet'}</Text>
-      <Text style={styles.nextBody}>{nextItem ? getPocketItemDetail(nextItem) : 'This is where your boarding pass, hotel confirmation, or reservation will appear when you need it most.'}</Text>
-      {nextItem?.screenshotUri && !nextImageFailed && <Image source={{ uri: nextItem.screenshotUri }} style={styles.nextImage} resizeMode="cover" onError={() => setNextImageFailed(true)} />}
-      {nextItem?.screenshotUri && nextImageFailed && (
-        <View style={styles.nextMissingImage}>
-          <Text style={styles.nextMissingTitle}>Photo unavailable</Text>
-          <Text style={styles.nextMissingText}>Open this item and reattach it.</Text>
-        </View>
-      )}
-      {!nextItem && <NeedItNowPromise />}
-    </TouchableOpacity>
-  );
-
   return (
     <View>
       <Text style={styles.back} onPress={onBack}>Back home</Text>
@@ -328,8 +307,6 @@ export function PocketScreen({
 
       {!items.length && quickCaptureCard}
 
-      {needItNowCard}
-
       {!!items.length && (
         <TouchableOpacity onPress={() => setIsShareOpen((current) => !current)} style={styles.shareSummaryButton}>
           <View>
@@ -346,6 +323,8 @@ export function PocketScreen({
           onShare={shareTravelSummary}
         />
       )}
+
+      <PocketSection title="Pinned" items={groups.pinned} onOpen={setSelectedItem} onEdit={editItem} />
 
       {!!groups.recent.length && (
         <PocketSection title="Recently Added" items={groups.recent} onOpen={setSelectedItem} onEdit={editItem} compact />
@@ -441,7 +420,6 @@ export function PocketScreen({
 
       {!!items.length && (
         <View style={styles.sections}>
-          <PocketSection title="Need It Now" items={groups.pinned} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Today" items={groups.today} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Tomorrow" items={groups.tomorrow} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Upcoming" items={groups.upcoming} onOpen={setSelectedItem} onEdit={editItem} />
@@ -561,20 +539,6 @@ function AddOption({ mark, title, body, onPress, featured = false }: { mark: str
         <Text style={[styles.addOptionBody, featured && styles.addOptionBodyFeatured]}>{body}</Text>
       </View>
     </TouchableOpacity>
-  );
-}
-
-function NeedItNowPromise() {
-  return (
-    <View style={styles.promiseCard}>
-      <View style={styles.promiseIcon}>
-        <Text style={styles.promiseIconText}>BP</Text>
-      </View>
-      <View style={styles.promiseCopy}>
-        <Text style={styles.promiseTitle}>Boarding Pass</Text>
-        <Text style={styles.promiseMeta}>Today</Text>
-      </View>
-    </View>
   );
 }
 
@@ -788,7 +752,7 @@ function PocketFields({
           <PocketInput label="Confirmation code" value={draft.confirmation} onChangeText={(value) => setField('confirmation', value)} placeholder="Optional" />
           <PocketInput label="Link" value={draft.link} onChangeText={(value) => setField('link', value)} placeholder="Optional booking link" keyboardType="url" autoCapitalize="none" />
           <TouchableOpacity onPress={() => setField('pinned', !draft.pinned)} style={[styles.pinToggle, draft.pinned && styles.pinToggleActive]}>
-            <Text style={[styles.pinToggleText, draft.pinned && styles.pinToggleTextActive]}>{draft.pinned ? 'Pinned to Need It Now' : 'Pin to Need It Now'}</Text>
+            <Text style={[styles.pinToggleText, draft.pinned && styles.pinToggleTextActive]}>{draft.pinned ? 'Pinned' : 'Pin this item'}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -1046,7 +1010,7 @@ function PocketViewer({
   const handleTogglePin = () => {
     const nextPinned = !item.pinned;
     onTogglePin(item);
-    setPinFeedback(nextPinned ? 'Moved to Need It Now.' : 'Removed from Need It Now.');
+    setPinFeedback(nextPinned ? 'Pinned.' : 'Removed from Pinned.');
   };
 
   return (
@@ -1093,8 +1057,8 @@ function PocketViewer({
               <Text style={styles.openLinkText}>Open link</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={handleTogglePin} style={[styles.pinNeedButton, item.pinned && styles.pinNeedButtonActive]}>
-            <Text style={[styles.pinNeedText, item.pinned && styles.pinNeedTextActive]}>{item.pinned ? 'Pinned to Need It Now' : 'Pin to Need It Now'}</Text>
+          <TouchableOpacity onPress={handleTogglePin} style={[styles.pinNeedButton, item.pinned && styles.pinNeedButtonRemove]}>
+            <Text style={[styles.pinNeedText, item.pinned && styles.pinNeedTextRemove]}>{item.pinned ? 'Remove from Pinned' : 'Pin this item'}</Text>
           </TouchableOpacity>
           {!!pinFeedback && <Text style={styles.pinFeedbackText}>{pinFeedback}</Text>}
           {!!item.screenshotUri && !imageFailed && (
@@ -1346,7 +1310,7 @@ function getNextPocketItem(items: PocketItem[]) {
 
   const pinned = [...items]
     .filter((item) => item.pinned)
-    .sort((left, right) => getNeedItNowPriority(left, now) - getNeedItNowPriority(right, now))[0];
+    .sort((left, right) => getPinnedPriority(left, now) - getPinnedPriority(right, now))[0];
   if (pinned) return pinned;
 
   const todayItems = [...items]
@@ -1367,6 +1331,7 @@ function groupPocketItems(items: PocketItem[], trip?: TripDraft) {
   const tomorrow = getDateOffset(1);
   const sorted = [...items].sort((left, right) => getSortTime(left) - getSortTime(right));
   const recent = [...items]
+    .filter((item) => !item.pinned)
     .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
     .slice(0, 3);
   const archiveCutoff = getArchiveCutoffDate(trip);
@@ -1383,7 +1348,7 @@ function groupPocketItems(items: PocketItem[], trip?: TripDraft) {
   };
 }
 
-function getNeedItNowPriority(item: PocketItem, now: Date) {
+function getPinnedPriority(item: PocketItem, now: Date) {
   const itemTime = getItemDateTime(item).getTime();
   if (item.date && itemTime >= now.getTime() - 30 * 60 * 1000) return itemTime;
   return Number.MAX_SAFE_INTEGER - new Date(item.updatedAt ?? item.createdAt).getTime();
@@ -1588,20 +1553,9 @@ const styles = StyleSheet.create({
   tripDates: { ...androidTextReset, color: colors.muted, fontFamily: font.body, fontSize: 12.5, marginTop: 2 },
   tripNextLabel: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '800', fontSize: 10.5, textTransform: 'uppercase', marginTop: 8 },
   tripNextText: { ...androidTextReset, color: colors.charcoal, fontFamily: font.semibold, fontWeight: '800', fontSize: 13, lineHeight: 17, marginTop: 2 },
-  nextCard: { gap: 9, borderRadius: 26, padding: 18, backgroundColor: '#10231D', borderWidth: 1, borderColor: 'rgba(168,240,212,0.18)', marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 5 },
   nextKicker: { ...androidTextReset, color: '#A8F0D4', fontFamily: font.semibold, fontWeight: '800', fontSize: 11, textTransform: 'uppercase' },
   nextTitle: { ...androidTextReset, color: colors.white, fontFamily: font.heading, fontWeight: '800', fontSize: 22, lineHeight: 27 },
   nextBody: { ...androidTextReset, color: 'rgba(248,248,246,0.78)', fontFamily: font.body, fontSize: 14, lineHeight: 20 },
-  nextImage: { width: '100%', height: 170, borderRadius: 18, marginTop: 4 },
-  nextMissingImage: { minHeight: 116, borderRadius: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, marginTop: 4, backgroundColor: 'rgba(255,241,239,0.12)', borderWidth: 1, borderColor: 'rgba(255,241,239,0.18)' },
-  nextMissingTitle: { ...androidTextReset, color: '#FFE4DF', fontFamily: font.heading, fontWeight: '800', fontSize: 18, textAlign: 'center' },
-  nextMissingText: { ...androidTextReset, color: 'rgba(248,248,246,0.68)', fontFamily: font.body, fontSize: 13, marginTop: 4, textAlign: 'center' },
-  promiseCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4, borderRadius: 18, padding: 12, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(248,248,246,0.10)', opacity: 0.72 },
-  promiseIcon: { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(248,248,246,0.12)' },
-  promiseIconText: { ...androidTextReset, color: '#A8F0D4', fontFamily: font.semibold, fontWeight: '800', fontSize: 12 },
-  promiseCopy: { flex: 1 },
-  promiseTitle: { ...androidTextReset, color: colors.white, fontFamily: font.heading, fontWeight: '800', fontSize: 16, lineHeight: 20 },
-  promiseMeta: { ...androidTextReset, color: 'rgba(248,248,246,0.66)', fontFamily: font.semibold, fontWeight: '700', fontSize: 12, marginTop: 2 },
   shareSummaryButton: { borderRadius: 22, padding: 15, marginBottom: 14, backgroundColor: Platform.OS === 'android' ? '#FFFFFF' : 'rgba(255,255,255,0.82)', borderWidth: 1, borderColor: 'rgba(32,38,35,0.08)' },
   shareSummaryTitle: { ...androidTextReset, color: colors.charcoal, fontFamily: font.heading, fontWeight: '800', fontSize: 18, lineHeight: 23 },
   shareSummaryBody: { ...androidTextReset, color: colors.muted, fontFamily: font.body, fontSize: 13.5, lineHeight: 19, marginTop: 3 },
@@ -1794,9 +1748,9 @@ const styles = StyleSheet.create({
   openLinkButton: { minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 16, backgroundColor: '#173A33' },
   openLinkText: { ...androidTextReset, color: colors.white, fontFamily: font.semibold, fontWeight: '800', fontSize: 14 },
   pinNeedButton: { minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 16, backgroundColor: '#E9FBF4', borderWidth: 1, borderColor: 'rgba(47,175,138,0.22)' },
-  pinNeedButtonActive: { backgroundColor: '#173A33', borderColor: '#173A33' },
+  pinNeedButtonRemove: { backgroundColor: '#FFF4F2', borderColor: 'rgba(184,74,63,0.28)' },
   pinNeedText: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '800', fontSize: 14 },
-  pinNeedTextActive: { color: colors.white },
+  pinNeedTextRemove: { color: '#B84A3F' },
   pinFeedbackText: { ...androidTextReset, color: colors.tealDark, fontFamily: font.semibold, fontWeight: '800', fontSize: 12.5, textAlign: 'center', marginTop: 8 },
   openImageButton: { minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 16, backgroundColor: '#173A33' },
   openImageText: { ...androidTextReset, color: colors.white, fontFamily: font.semibold, fontWeight: '800', fontSize: 14 },
