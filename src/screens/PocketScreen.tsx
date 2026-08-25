@@ -435,11 +435,11 @@ export function PocketScreen({
 
       {!!items.length && (
         <View style={styles.sections}>
+          <PocketSection title="Need It Now" items={groups.pinned} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Today" items={groups.today} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Tomorrow" items={groups.tomorrow} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Upcoming" items={groups.upcoming} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Earlier This Trip" items={groups.earlier} onOpen={setSelectedItem} onEdit={editItem} />
-          <PocketSection title="Pinned" items={groups.pinned} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Undated" items={groups.undated} onOpen={setSelectedItem} onEdit={editItem} />
           <PocketSection title="Trip Archive" items={groups.archive} onOpen={setSelectedItem} onEdit={editItem} />
         </View>
