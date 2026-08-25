@@ -2,7 +2,7 @@
   "expo": {
     "name": "GoWandr",
     "slug": "gowandr",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "default",
     "icon": "./assets/brand/gowandr-logo-icon-color.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,8 @@
       "bundleIdentifier": "com.gowandr.app",
       "appStoreUrl": "https://apps.apple.com/app/id6785278681",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "GoWandr uses your photo library so you can save screenshots, confirmations, and travel details in Pocket."
       }
     },
     "android": {
@@ -40,6 +41,12 @@
     "plugins": [
       "expo-asset",
       "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GoWandr uses your photo library so you can save screenshots, confirmations, and travel details in Pocket."
+        }
+      ],
       [
         "expo-build-properties",
         {

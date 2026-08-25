@@ -153,6 +153,7 @@ export function PocketScreen({
     setEditingItemId(undefined);
     setIsAddOpen(false);
     if (kind === 'screenshot' || kind === 'photo') {
+      await waitForNativePickerPresentation();
       const uri = await pickImage();
       if (!uri) return;
       setDraft({ ...nextDraft, screenshotUri: uri });
@@ -1147,12 +1148,38 @@ function ZoomImageModal({ visible, uri, title, onClose }: { visible: boolean; ur
 }
 
 async function pickImage() {
+  const hasPermission = await requestPhotoLibraryAccess();
+  if (!hasPermission) return undefined;
+
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ImagePicker.MediaTypeOptions.Images,
     quality: 0.9,
   });
   const uri = !result.canceled && result.assets[0]?.uri ? result.assets[0].uri : undefined;
   return uri ? savePocketImage(uri) : undefined;
+}
+
+async function requestPhotoLibraryAccess() {
+  if (Platform.OS === 'web') return true;
+
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (permission.granted) return true;
+
+  Alert.alert(
+    'Photo access needed',
+    'Allow photo access so GoWandr can save screenshots and travel details in Pocket.',
+    [
+      { text: 'Not now', style: 'cancel' },
+      { text: 'Open Settings', onPress: () => Linking.openSettings() },
+    ],
+  );
+  return false;
+}
+
+function waitForNativePickerPresentation() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, Platform.OS === 'ios' ? 450 : 0);
+  });
 }
 
 async function savePocketImage(uri: string) {
